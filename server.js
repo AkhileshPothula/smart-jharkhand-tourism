@@ -16,6 +16,8 @@ app.use(bodyParser.urlencoded({ extended: true }));
 connectToMongoDB(process.env.MONGODB ?? "mongodb://localhost:27017/tourist").then(() =>
   console.log("Mongodb connected")
 );
+const touristRoutes = require("./routes/touristRoutes");
+app.use("/api/tourists", touristRoutes);
 
 
 
