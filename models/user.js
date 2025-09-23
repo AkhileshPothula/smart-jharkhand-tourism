@@ -10,6 +10,7 @@ const touristSchema = new mongoose.Schema({
     type: String,
     enum: ["English", "Hindi", "Santali", "Ho", "Bengali"],
     default: "English"
+    
   },
 
   preferences: {
