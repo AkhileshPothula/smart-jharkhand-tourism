@@ -19,6 +19,7 @@ const {
 } = require("../controllers/user");
 
 // ✅ Auth
+// Get tourist profile
 router.post("/register", registerTourist);   // Register a new tourist
 router.post("/login",loginTourist);         // Login
 

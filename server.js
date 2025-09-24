@@ -9,6 +9,8 @@ const { connectToMongoDB } = require('./connect');
 const PORT= process.env.PORT || 5000;
 const touristRoutes = require("./routers/user");
 const adminRoutes = require("./routers/admin");
+const guideRoutes = require("./routers/guide");
+const VendorRoutes = require("./routers/vendor");
 dotenv.config();
 app.use(express.json());
 app.use(bodyParser.json());
@@ -21,6 +23,8 @@ app.use("/user",touristRoutes)
 
 app.use("/admin", adminRoutes);
 
+app.use("/guide", guideRoutes);
+app.use("/vendor", VendorRoutes);
 app.listen(PORT, () => {
     console.log(`Server is running on port: ${PORT}`);
 });
