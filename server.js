@@ -8,6 +8,7 @@ const path = require('path');
 const { connectToMongoDB } = require('./connect');
 const PORT= process.env.PORT || 5000;
 const touristRoutes = require("./routers/user");
+const adminRoutes = require("./routers/admin");
 dotenv.config();
 app.use(express.json());
 app.use(bodyParser.json());
@@ -17,12 +18,8 @@ connectToMongoDB(process.env.MONGODB ?? "mongodb://localhost:27017/tourist").the
   console.log("Mongodb connected")
 );
 app.use("/user",touristRoutes)
-app.use("/api/tourists", touristRoutes);
 
-
-
-
-
+app.use("/admin", adminRoutes);
 
 app.listen(PORT, () => {
     console.log(`Server is running on port: ${PORT}`);
