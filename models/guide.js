@@ -1,41 +1,17 @@
 const mongoose = require("mongoose");
 
 const guideSchema = new mongoose.Schema({
-  name: {
-    type: String,
-    required: true, // Guide's full name
-  },
-  email: {
-    type: String,
-    required: true,
-    unique: true, // Login/contact email
-  },
-  password: {
-    type: String,
-    required: true, // For guide login (hashed)
-  },
-  phone: {
-    type: String,
-    required: true,
-  },
-  languages: {
-    type: [String], // Languages the guide can speak
-    required: true,
-  },
-  experience: {
-    type: Number, // Years of experience
-    default: 0,
-  },
-  location: {
-    type: String, // Area/city where the guide operates
-  },
-  approved: {
-    type: Boolean,
-    default: false, // Admin approval status
-  },
- 
-},{
-    timestamps: true
-});
+  firstName: { type: String, required: true, trim: true },
+  lastName: { type: String, required: true, trim: true },
+  email: { type: String, required: true, unique: true, lowercase: true },
+  password: { type: String, required: true },
+  phone: String,
+  role: { type: String, enum: ["Tourist", "Guide", "Admin", "Vendor"], default: "Guide" },
+  bio: { type: String, maxlength: 500 },
+  languages: [{ type: String }], // e.g., ["English", "Hindi", "Santali"]
+  certifications: [{ type: String }],
+  experience: { type: Number, default: 0 }, // Years of experience
+  // You can add more fields specific to guides here
+}, { timestamps: true });
 
 module.exports = mongoose.model("Guide", guideSchema);

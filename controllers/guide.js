@@ -1,47 +1,63 @@
 const Guide = require("../models/guide");
 const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
 
-// ✅ Register Guide
+const JWT_SECRET = process.env.JWT_SECRET || "supersecretjwtkey"; // Use environment variable
+const JWT_EXPIRATION = "1h"; // Token expires in 1 hour
+
+// ================= AUTH =================
+
+// Register new guide
 async function registerGuide(req, res) {
   try {
-    const { name, email, password, phone, languages, experience, location } = req.body;
+    const { firstName, lastName, email, password, phone, role, bio, languages, certifications, experience } = req.body;
 
-    // Check if guide already exists
-    const existingGuide = await Guide.findOne({ email });
-    if (existingGuide) return res.status(400).json({ message: "Guide already exists" });
+    const existing = await Guide.findOne({ email });
+    if (existing) return res.status(400).json({ message: "Email already registered" });
 
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    const newGuide = new Guide({
-      name,
-      email,
-      password: hashedPassword,
-      phone,
-      languages,
-      experience,
-      location,
-      approved: false, // default: admin approval required
+    const guide = new Guide({ firstName, lastName, email, password: hashedPassword, phone, role, bio, languages, certifications, experience });
+    const saved = await guide.save();
+
+    const token = jwt.sign({ id: saved._id, role: saved.role }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 3600000,
     });
 
-    await newGuide.save();
-    res.status(201).json({ message: "Guide registered successfully", guide: newGuide });
+    res.status(201).json({ message: "Guide registered successfully", data: { id: saved._id, firstName: saved.firstName, lastName: saved.lastName, email: saved.email, role: saved.role } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 }
 
-// ✅ Guide Login
+// Login
 async function loginGuide(req, res) {
   try {
     const { email, password } = req.body;
     const guide = await Guide.findOne({ email });
 
-    if (!guide) return res.status(404).json({ message: "Guide not found" });
+    if (!guide) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
     const isMatch = await bcrypt.compare(password, guide.password);
-    if (!isMatch) return res.status(401).json({ message: "Invalid credentials" });
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
 
-    res.status(200).json({ message: "Login successful", guide: { id: guide._id, email: guide.email, approved: guide.approved } });
+    const token = jwt.sign({ id: guide._id, role: guide.role }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 3600000,
+    });
+
+    res.json({ message: "Login successful", data: { id: guide._id, firstName: guide.firstName, lastName: guide.lastName, email: guide.email, role: guide.role } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

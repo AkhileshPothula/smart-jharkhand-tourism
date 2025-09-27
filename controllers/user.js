@@ -1,19 +1,35 @@
 // controllers/touristController.js
 const Tourist = require("../models/user");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+
+const JWT_SECRET = process.env.JWT_SECRET || "supersecretjwtkey"; // Use environment variable
+const JWT_EXPIRATION = "1h"; // Token expires in 1 hour
 
 // ================= AUTH =================
 
 // Register new tourist
 async function registerTourist(req, res) {
   try {
-    const { name, email, password, phone } = req.body;
+    const { firstName, lastName, email, password, phone, role } = req.body;
 
     const existing = await Tourist.findOne({ email });
     if (existing) return res.status(400).json({ message: "Email already registered" });
 
-    const tourist = new Tourist({ name, email, password, phone });
+    const hashedPassword = await bcrypt.hash(password, 10); // Hash the password
+
+    const tourist = new Tourist({ firstName, lastName, email, password: hashedPassword, phone, role });
     const saved = await tourist.save();
-    res.status(201).json({ message: "Tourist registered successfully", data: saved });
+
+    const token = jwt.sign({ id: saved._id, role: saved.role }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 3600000, // 1 hour
+    });
+
+    res.status(201).json({ message: "Tourist registered successfully", data: { id: saved._id, firstName: saved.firstName, lastName: saved.lastName, email: saved.email, role: saved.role } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -25,11 +41,24 @@ async function loginTourist(req, res) {
     const { email, password } = req.body;
     const tourist = await Tourist.findOne({ email });
 
-    if (!tourist || tourist.password !== password) {
+    if (!tourist) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    res.json({ message: "Login successful", data: tourist });
+    const isMatch = await bcrypt.compare(password, tourist.password); // Compare hashed passwords
+    if (!isMatch) {
+      return res.status(401).json({ message: "Invalid credentials" });
+    }
+
+    const token = jwt.sign({ id: tourist._id }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      maxAge: 3600000, // 1 hour
+    });
+
+    res.json({ message: "Login successful", data: { id: tourist._id, name: tourist.name, email: tourist.email } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -202,6 +231,16 @@ async function getReviews(req, res) {
   }
 }
 
+// Logout
+async function logoutTourist(req, res) {
+  try {
+    res.clearCookie("token");
+    res.json({ message: "Logout successful" });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
 // ✅ Export All
 module.exports = {
   registerTourist,
@@ -217,4 +256,5 @@ module.exports = {
   makeTransaction,
   addReview,
   getReviews,
+  logoutTourist,
 };

@@ -1,16 +1,18 @@
 const mongoose = require("mongoose");
 
 const touristSchema = new mongoose.Schema({
-  name: { type: String, required: true, trim: true },
+  firstName: { type: String, required: true, trim: true },
+  lastName: { type: String, required: true, trim: true },
   email: { type: String, required: true, unique: true, lowercase: true },
   password: { type: String, required: true },
   phone: String,
+  role: { type: String, enum: ["Tourist", "Guide", "Admin", "Vendor"], default: "Tourist" }, // Added role field
 
   languagePreference: {
     type: String,
     enum: ["English", "Hindi", "Santali", "Ho", "Bengali"],
     default: "English"
-    
+
   },
 
   preferences: {
