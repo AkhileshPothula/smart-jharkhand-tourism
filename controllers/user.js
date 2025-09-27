@@ -50,7 +50,7 @@ async function loginTourist(req, res) {
       return res.status(401).json({ message: "Invalid credentials" });
     }
 
-    const token = jwt.sign({ id: tourist._id }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
+    const token = jwt.sign({ id: tourist._id, role: tourist.role }, JWT_SECRET, { expiresIn: JWT_EXPIRATION });
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -58,7 +58,7 @@ async function loginTourist(req, res) {
       maxAge: 3600000, // 1 hour
     });
 
-    res.json({ message: "Login successful", data: { id: tourist._id, name: tourist.name, email: tourist.email } });
+    res.json({ message: "Login successful", data: { id: tourist._id, firstName: tourist.firstName, lastName: tourist.lastName, email: tourist.email, role: tourist.role } });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
